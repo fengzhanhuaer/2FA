@@ -158,6 +158,40 @@ function closeAddModal() {
 
 modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) closeAddModal(); });
 
+fieldSecret.addEventListener('input', () => {
+  const val = fieldSecret.value.trim();
+  if (val.startsWith('otpauth://totp/')) {
+    try {
+      const url = new URL(val);
+      const pathname = decodeURIComponent(url.pathname.replace(/^\//, ''));
+      
+      // Extract issuer and account name from pathname (e.g., "Issuer:AccountName")
+      let issuer = '';
+      let accountName = pathname;
+      if (pathname.includes(':')) {
+        const parts = pathname.split(':');
+        issuer = parts[0].trim();
+        accountName = parts.slice(1).join(':').trim();
+      }
+
+      // Override with query params if they exist
+      const queryIssuer = url.searchParams.get('issuer');
+      if (queryIssuer) {
+        issuer = queryIssuer;
+      }
+      const querySecret = url.searchParams.get('secret');
+
+      if (querySecret) {
+        fieldSecret.value = querySecret;
+        if (accountName) fieldName.value = accountName;
+        if (issuer) fieldIssuer.value = issuer;
+      }
+    } catch (e) {
+      console.error('Failed to parse otpauth URI:', e);
+    }
+  }
+});
+
 document.getElementById('btnSaveAccount').addEventListener('click', async () => {
   const name   = fieldName.value.trim();
   const issuer = fieldIssuer.value.trim();
